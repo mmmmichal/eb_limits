@@ -1,9 +1,6 @@
 # Digitálna obsluha limitov pre elektronické kanály
 sprava limitov pre elektronicke bankovnictvo
 
-
-# 🧠 COMPONENT
-
 ```yaml
 contact:
   name: Responsible Team
@@ -12,13 +9,30 @@ contact:
 
 [[_TOC_]]
 
-### 🎯 Purpose
+## 🎯 Súčasný stav
+Ak chce používateľ meniť limity na jednotlivých produktoch (karta, účet), je v súčasnej dobe nútený navštíviť najbližšiu pobočku. Operátor na pobočke je schopný používateľovi zmeniť limit podľa požiadavky po overení totožnoti a fyzickom podpísaní žiadosti o zmenu. Zmena je aktuálne logovaná v pobočkovom systéme a dokumenty sú archivované v listinnej aj elektronickej podobe v archívoch po dobu 10-tich rokov.
 
-## 🏗️ Architecture
+## 🏗️ Cieľový stav
+Cieľom je používateľovi ponúknuť digitálnu verziu procesu pre úpravu limitov na produktoch v rámci všetkých digitálnych kanálov. Služba bude dostupná 24/7 bez nutnosti fyzickej návševy banky. Zmena bude podpisovaná bezpečnostným predmetom a počet zmien nebude limitovaný.
 
-### 🗄️ Data Model
+V rámci tejto zmenovej požiadavky budú riešené produkty:
 
-<!-- TODO: Update example. -->
+- debetná karta
+- osobný účet
+
+v kanáloch:
+
+- elektronické bankovníctvo - web
+- elektronické bankovníctvo - mobilná aplikácia
+
+pre segment retailových klientov.
+
+Pre obsluhu korporátnych klientov a zmeny limitov pre kreditné karty bude vytvorená samostatná zmenová požiadavka.
+
+## 🗄️ Detailný popis požiadavky
+
+## 🏗️ Architektúra
+
 
 ```mermaid
 %%{init: {'theme':'base'}}%%
