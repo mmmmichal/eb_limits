@@ -1,5 +1,5 @@
 # Digitálna obsluha limitov pre elektronické kanály
-sprava limitov pre elektronicke bankovnictvo
+Zmenová požiadavka
 
 ```yaml
 contact:
@@ -146,7 +146,7 @@ graph LR
 
     EB["EB Component"]
 
-     EB -->|"GET v1/accounts"| UserApp
+     EB -->|"GET v1/netBanking"| UserApp
     
 
     UserApp -->|"v1/cards/{cardId}/limits"| APIGW
@@ -164,6 +164,15 @@ graph LR
    
 ```
 
+
+| Typ zmeny | Metóda | Endpoint | Detail úpravy |
+|----------|--------|----------|---------------|
+| Úprava | GET | v1/netBanking | Úprava existujúceho endpointu – pridanie informácií o vzťahu prihláseného používateľa ku karte/účtu  |
+| Nová | POST | v1/cards/{cardId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétnu kartu |
+| Nová | POST | v1/accounts/{accId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétny účet |
+
+
+
 ## 📜 API Commons
 
 A shared set of standards or common guidelines applicable across various APIs or Features.
@@ -173,87 +182,35 @@ A shared set of standards or common guidelines applicable across various APIs or
 ### 🔢 Generic Sequence diagram
 
 ```mermaid
+
 sequenceDiagram
     autonumber
 
-    participant Client as Client (George store Mobile)
-    participant FEapp as FE app
-    participant GBO as GBO (OWFE / OZPU process)
-    participant Facade as GBO Facade
-    participant CHF as CHF
-    participant MACNX as MACNX
-    participant OMS as OMS
-    participant BS as BS
-    participant FE as FE
+    participant UserApp as User App
+    participant APIGW as API Gateway
+    participant CardFacade as Card Facade
+    participant AccountFacade as Account Facade
+    participant CoreBanking as Core Banking system
+    participant CardProducer as Card producer
+    participant EB as EB Component
 
-    Client->>FEapp: Start / open onboarding
-    FEapp->>Facade: Load corporate clients
-    Facade-->>FEapp: Corporate clients
-    FEapp-->>Client: List of corporate clients
+    %% Net banking initialization
+    EB ->> UserApp: GET v1/netBanking
 
-    alt new
-        FEapp->>GBO: user ID load
-        GBO-->>FEapp: GBO started / Case created
-    else existing
-        FEapp->>MACNX: client ID load\n(start params: company CID validation OR GBO process ID)
-        MACNX-->>FEapp: validated CID / GBO process ID
-        FEapp->>GBO: CorporateAccountCreate (message start)
-    end
+    %% Card limits flow
+    UserApp ->> APIGW: v1/cards/{cardId}/limits
+    APIGW ->> CardFacade: forward request
+    CardFacade ->> CoreBanking: get card limits
+    CoreBanking ->> EB: fetch EB data
+    CardFacade ->> CardProducer: card-related processing
 
-    %% Verify existing onboarding + load personal details
-    GBO->>Facade: Verify existing onboarding / LE\nGET /cases/dedupe
-    Facade-->>GBO: dedupe result
-    GBO->>CHF: GET /my/profile
-    CHF-->>GBO: profile data
+    %% Account limits flow
+    UserApp ->> APIGW: v1/accounts/{accId}/limits
+    APIGW ->> AccountFacade: forward request
+    AccountFacade ->> CoreBanking: get account limits
+    CoreBanking ->> EB: fetch EB data
+    AccountFacade ->> CardProducer: related card processing
 
-    %% Identification + case creation
-    GBO->>Facade: POST /identity/identification/token
-    Facade-->>GBO: token
-    GBO->>Facade: POST /cases
-    Facade-->>GBO: caseId
-
-    %% Load case data for screens
-    GBO->>Facade: GET /cases/{caseId}
-    Facade-->>GBO: case
-    GBO->>Facade: GET /cases/{caseId}/company
-    Facade-->>GBO: company
-    GBO->>Facade: GET /cases/{caseId}/beneficial-owners
-    Facade-->>GBO: BOs
-    GBO->>Facade: GET /cases/{caseId}/background-checks
-    Facade-->>GBO: background checks
-    GBO->>Facade: GET /cases/{caseId}/tax-info
-    Facade-->>GBO: tax info
-
-    %% Update submitted data
-    GBO->>Facade: PUT /cases/{caseId}/company
-    GBO->>Facade: PUT /cases/{caseId}/managers
-    GBO->>Facade: PUT /cases/{caseId}/beneficial-owners
-    GBO->>Facade: PUT /cases/{caseId}/background-checks
-    GBO->>Facade: PUT /cases/{caseId}/tax-info
-    Facade-->>GBO: updated
-
-    %% Approve + callbacks
-    GBO->>Facade: POST /cases/{caseId}/contracts/signatories
-    GBO->>Facade: POST /cases/{caseId}/products/signatories
-    GBO->>Facade: POST /cases/{caseId}/approve
-    GBO->>Facade: POST /case/callbacks
-    Facade-->>GBO: callback accepted
-
-    %% Products + signing
-    GBO->>Facade: GET /cases/{caseId}/products
-    Facade-->>GBO: products
-    GBO->>OMS: document generation
-    OMS-->>GBO: documents
-    GBO->>BS: Sign and update documents
-    BS-->>GBO: signed
-
-    %% GWF creation + KYC validation
-    GBO->>FE: company data collection for GWF\nLoad all data from GBO v1/users/{CID}
-    FE-->>GBO: collected
-    GBO->>FE: GWF creation\n(type: existing CID OR existing GBO case)
-    FE-->>GBO: GWF created
-    GBO->>MACNX: KYC validation
-    MACNX-->>GBO: KYC result
 ```
 
 <!-- TODO: Any other component level details applicable for every supported feature. -->
