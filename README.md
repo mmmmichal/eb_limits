@@ -40,7 +40,11 @@ flowchart TD
     G --> H
 ```
 ## 🏗️ Cieľový stav
-Cieľom je používateľovi ponúknuť digitálnu verziu procesu pre úpravu limitov na produktoch v rámci všetkých digitálnych kanálov. Služba bude dostupná 24/7 bez nutnosti fyzickej návševy banky. Zmena bude podpisovaná bezpečnostným predmetom a počet zmien nebude limitovaný.
+Cieľom je používateľovi ponúknuť digitálnu verziu procesu pre úpravu limitov na produktoch v rámci všetkých digitálnych kanálov. Služba bude dostupná 24/7 bez nutnosti fyzickej návševy banky. Zmena bude podpisovaná bezpečnostným predmetom a počet zmien nebude limitovaný. 
+
+Týmto riešením budú odstránené hlavné užívateľské problémy - nutnosť návštevy pobočky, fyzické podpisovanie dokumentov, nedostupnosť služby mimo pracovných hodín, neflexibilné manažovanie limitov.
+
+Z pohľadu banky sa odstráni potreba archivácie dokumentov, zníži sa početnosť návštev na pobočke a dobehne sa konkurencia, ktorá už touto funkcionalitou disponuje dlhší čas.
 
 V rámci tejto zmenovej požiadavky budú riešené produkty:
 
@@ -55,6 +59,7 @@ v kanáloch:
 pre segment retailových klientov.
 
 Pre obsluhu korporátnych klientov a zmeny limitov pre kreditné karty bude vytvorená samostatná zmenová požiadavka.
+V každom procese pôjde o úpravu limitov, nakoľko pri zakladaní produktu sa vždy limity definujú
 
 ```mermaid
 
@@ -130,56 +135,90 @@ C. Autorizácia
 
 ## 🏗️ Architektúra
 
+![Component Diagram](assets/limits.svg)
 
+Source: [EB limits for accounts and cards](assets/limits.svg)
 
-```mermaid
-graph LR
-    UserApp["User App"]
-    APIGW["API Gateway"]
-    coreBanking["Core Banking system"]
-    CardProducer["Card producer"]
-
-    subgraph Facades["Facade Microapps"]
-        CardFacade["Card Facade"]
-        AccountFacade["Account Facade"]
-    end
-
-    EB["EB Component"]
-
-     EB -->|"GET v1/netBanking"| UserApp
-    
-
-    UserApp -->|"v1/cards/{cardId}/limits"| APIGW
-    APIGW --> CardFacade
-    coreBanking --> EB
-    CardFacade --> coreBanking
-    CardFacade --> CardProducer
-
-    UserApp -->|"v1/accounts/{accId}/limits"| APIGW
-    APIGW --> AccountFacade
-    coreBanking --> EB
-    AccountFacade --> coreBanking
-    AccountFacade --> CardProducer
-
-   
-```
 
 
 | Typ zmeny | Metóda | Endpoint | Detail úpravy |
 |----------|--------|----------|---------------|
-| Úprava | GET | v1/netBanking | Úprava existujúceho endpointu – pridanie informácií o vzťahu prihláseného používateľa ku karte/účtu  |
-| Nová | POST | v1/cards/{cardId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétnu kartu |
-| Nová | POST | v1/accounts/{accId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétny účet |
+| Úprava | GET | v1/netBanking | Úprava existujúceho endpointu – pridanie informácií o vzťahu prihláseného používateľa ku karte/účtu.  |
+| Nová | PUT | v1/cards/{cardId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétnu kartu |
+| Nová | PUT | v1/accounts/{accId}/limits | Nový endpoint na nastavenie alebo zmenu limitov pre konkrétny účet |
+| Nová | GET | v1/cards/{cardId}/limits | Nový endpoint na načítanie zoznamu limitov pre konkrétnu kartu |
+| Nová | GET | v1/accounts/{accId}/limits | Nový endpoint na načítanie zoznamu limitov pre konkrétny účet |
 
+| Dopadový komponent | Popis dopadu |
+|-------------------|--------------|
+| Electronic Banking          | Rozšírenie o feature flag číselníkové hodnotu, ktorá definuje monžnosť úpravy limitu pre daný produkt v rámci služby GET v1/netBanking. Zdrojom informácií bude Core banking system. |
+| Core banking      | Povolenie úpravy limitu pre produkty debetná karta a účet z kanálu elektronického bankovníctva. |
+| API GW            | Úprava swaggru pre nové služby. |
+| Daily banking            | Vývoj 4 nových endpointov pre načítanie a úpravu limitov pre karty a účty.|
+| CRM            | Príprava kampane pre používateľov|
 
 
 ## 📜 API Commons
 
 A shared set of standards or common guidelines applicable across various APIs or Features.
 
-### 🔑 Authorization
+### 🔑 Autorizácia
 
-### 🔢 Generic Sequence diagram
+### 🔢 Stavový diagram
+```mermaid
+stateDiagram-v2
+    [*] --> Neprihlaseny
+
+    state "Retailový používateľ" as RU {
+        Neprihlaseny --> Prihlaseny : prihlásenie
+        Prihlaseny --> VyberKanala : vstup do digitálneho kanála
+
+    }
+
+    state "Digitálne kanály" as DK {
+        state VyberKanala <<choice>>
+        Web
+        Mobil
+        ZadanieZmeny
+    }
+
+    %% výber kanála až po prihlásení
+    VyberKanala --> Web : Elektronické bankovníctvo – Web
+    VyberKanala --> Mobil : Elektronické bankovníctvo – Mobilná aplikácia
+
+    Web --> ZadanieZmeny
+    Mobil --> ZadanieZmeny
+
+    state "Bankové systémy" as BS {
+        Overenie : Overenie oprávnenia
+        Podpis : Podpis zmeny bezpečnostným predmetom
+        Zmena : Vykonanie zmeny limitu
+        Log : Zalogovanie zmeny
+        Archiv : Elektronická archivácia
+
+        state RozhodnutieOpravnenia <<choice>>
+        state RozhodnutiePodpisu <<choice>>
+
+        Overenie --> RozhodnutieOpravnenia
+        RozhodnutieOpravnenia --> Podpis : OK
+        RozhodnutieOpravnenia --> Zamietnute : Neoprávnené / neplatný produkt
+
+        Podpis --> RozhodnutiePodpisu
+        RozhodnutiePodpisu --> Zmena : Podpis OK
+        RozhodnutiePodpisu --> Zamietnute : Podpis zlyhal / zrušené
+
+        Zmena --> Log
+        Log --> Archiv
+        Archiv --> Uspesne
+    }
+
+    ZadanieZmeny --> Overenie : požiadavka na zmenu limitu
+    Uspesne --> [*]
+    Zamietnute --> [*]
+  ```
+   
+  
+### 🔢 Seknvenčný diagram
 
 ```mermaid
 
@@ -197,20 +236,27 @@ sequenceDiagram
     %% Net banking initialization
     EB ->> UserApp: GET v1/netBanking
 
-    %% Card limits flow
-    UserApp ->> APIGW: v1/cards/{cardId}/limits
+    %% Card limits flow (PUT)
+    UserApp ->> APIGW: GET v1/cards/{cardId}/limits
     APIGW ->> CardFacade: forward request
-    CardFacade ->> CoreBanking: get card limits
+    CardFacade ->> CoreBanking: load card limits
+    CoreBanking ->> UserApp: list of all card limits
+    UserApp ->> APIGW: PUT v1/cards/{cardId}/limits
+    APIGW ->> CardFacade: forward request
+    CardFacade ->> CoreBanking: process card limits
     CoreBanking ->> EB: fetch EB data
     CardFacade ->> CardProducer: card-related processing
 
-    %% Account limits flow
-    UserApp ->> APIGW: v1/accounts/{accId}/limits
+    %% Account limits flow (PUT)
+    UserApp ->> APIGW: GET v1/accounts/{accId}/limits
+    APIGW ->> CardFacade: forward request
+    CardFacade ->> CoreBanking: load account limits
+    CoreBanking ->> UserApp: list of all account limits
+    UserApp ->> APIGW: PUT v1/accounts/{accId}/limits
     APIGW ->> AccountFacade: forward request
-    AccountFacade ->> CoreBanking: get account limits
+    AccountFacade ->> CoreBanking: process account limits
     CoreBanking ->> EB: fetch EB data
-    AccountFacade ->> CardProducer: related card processing
-
+    AccountFacade ->> CardProducer: related account processing
 ```
 
 <!-- TODO: Any other component level details applicable for every supported feature. -->
