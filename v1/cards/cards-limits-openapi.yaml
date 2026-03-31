@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: Banking Services API – Cards Limits
+  version: 1.0.0
+  description: |
+    API pre úpravu nastaviteľných limitov debetných platobných kariet.
+
+paths:
+  /v1/cards/{cardIdentifier}/limits:
+    get:
+      summary: Načítanie limitov debetnej karty
+      description: |
+        Vráti aktuálne nastaviteľné limity pre konkrétnu debetnú kartu
+        identifikovanú pomocou `cardIdentifier`.
+      operationId: getDebitCardLimits
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardIdentifier
+          in: path
+          required: true
+          description: >
+            **cardTokenisedPan** – jedinečný identifikátor karty,
+            ktorý je zároveň aj maskovaným PANom.
+          schema:
+            type: string
+            pattern: '^[0-9]{6}[a-zA-Z]{6}[0-9]{4}$'
+      responses:
+        '200':
+          description: Limity karty boli úspešne načítané
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardLimitsResponse'
+              example:
+                cardIdentifier: "123456ABCDEF7890"
+                limits:
+                  - id: LIMIT_123456
+                    type: ATM
+                    period: 1D
+                    limit:
+                      amount: 300
+                      currency: EUR
+                  - id: LIMIT_654321
+                    type: POS
+                    period: 1D
+                    limit:
+                      amount: 1000
+                      currency: EUR
+        '400':
+          description: Neplatná požiadavka alebo validačná chyba
+        '401':
+          description: Neautorizovaný prístup
+        '403':
+          description: Zakázaná operácia
+        '404':
+          description: Karta neexistuje
+
+    put:
+      summary: Úprava limitov debetnej karty
+      description: |
+        Upravuje nastaviteľné limity pre konkrétnu debetnú kartu
+        identifikovanú pomocou `cardIdentifier`.
+      operationId: updateDebitCardLimits
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardIdentifier
+          in: path
+          required: true
+          description: >
+            **cardTokenisedPan** – jedinečný identifikátor karty,
+            ktorý je zároveň aj maskovaným PANom.
+          schema:
+            type: string
+            pattern: '^[0-9]{6}[a-zA-Z]{6}[0-9]{4}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardLimitUpdateRequest'
+            example:
+              id: LIMIT_123456
+              type: ATM
+              period: 1D
+              limit:
+                amount: 300
+                currency: EUR
+      responses:
+        '200':
+          description: Limity karty boli úspešne aktualizované
+        '400':
+          description: Neplatná požiadavka alebo validačná chyba
+        '401':
+          description: Neautorizovaný prístup
+        '403':
+          description: Zakázaná operácia
+        '404':
+          description: Karta neexistuje
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Autorizačný token (OAuth 2.0 Bearer – Base64 kódovaná HTTP hlavička)
+        poskytnutý riešením Federated Login.
+
+  schemas:
+    CardLimitUpdateRequest:
+      type: object
+      required:
+        - id
+        - type
+        - period
+        - limit
+      properties:
+        id:
+          type: string
+          description: ID limitu, ktorý sa bude meniť
+          example: LIMIT_123456
+        type:
+          type: string
+          description: Typ limitu
+          enum:
+            - POS
+            - ATM
+            - INTERNET
+            - TOTAL
+        period:
+          type: string
+          description: |
+            Perióda limitu.
+            Príklad: `1D` = denný limit
+          enum:
+            - 1D
+            - 2D
+            - 3D
+            - 5D
+            - 7D
+            - 10D
+            - 15D
+            - 30D
+        limit:
+          $ref: '#/components/schemas/Money'
+
+    CardLimitsResponse:
+      type: object
+      required:
+        - cardIdentifier
+        - limits
+      properties:
+        cardIdentifier:
+          type: string
+          description: Identifikátor karty použitý v požiadavke
+          example: "123456ABCDEF7890"
+        limits:
+          type: array
+          description: Zoznam aktuálnych nastaviteľných limitov pre kartu
+          items:
+            $ref: '#/components/schemas/CardLimit'
+      example:
+        cardIdentifier: "123456ABCDEF7890"
+        limits:
+          - id: LIMIT_123456
+            type: ATM
+            period: 1D
+            limit:
+              amount: 300
+              currency: EUR
+
+    CardLimit:
+      type: object
+      required:
+        - id
+        - type
+        - period
+        - limit
+      properties:
+        id:
+          type: string
+          description: ID limitu
+          example: LIMIT_123456
+        type:
+          type: string
+          description: Typ limitu
+          enum:
+            - POS
+            - ATM
+            - INTERNET
+            - TOTAL
+        period:
+          type: string
+          description: Perióda limitu
+          enum:
+            - 1D
+            - 2D
+            - 3D
+            - 5D
+            - 7D
+            - 10D
+            - 15D
+            - 30D
+        limit:
+          $ref: '#/components/schemas/Money'
+
+    Money:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: number
+          format: decimal
+          description: Klientom nastavená hodnota limitu
+          example: 300
+        currency:
+          type: string
+          description: Mena limitu
+          example: EUR

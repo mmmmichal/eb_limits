@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Banking Services API – Account Limits
+  version: 1.0.0
+  description: |
+    API pre úpravu nastaviteľných limitov debetných platobných kariet.
+
+paths:
+  /v1/accounts/{accId}/limits:
+    get:
+      tags:
+        - Accounts
+        - Limits
+      summary: Get account limits
+      description: |
+        Returns all configured limits for a specific account.
+      operationId: getAccountLimits
+      parameters:
+        - name: accId
+          in: path
+          required: true
+          description: Unique account identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account limits retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLimitsResponse'
+        '400':
+          description: Invalid account identifier
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+
+    patch:
+      tags:
+        - Accounts
+        - Limits
+      summary: Update account limits
+      description: |
+        Updates one or more limits for a specific account.
+        Only provided limit values are updated.
+      operationId: updateAccountLimits
+      parameters:
+        - name: accId
+          in: path
+          required: true
+          description: Unique account identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountLimitsUpdateRequest'
+      responses:
+        '200':
+          description: Account limits updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLimitsResponse'
+        '400':
+          description: Validation error
+        '404':
+          description: Account not found
+        '409':
+          description: Limit conflict or business rule violation
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    AccountLimitsResponse:
+      type: object
+      required:
+        - accId
+        - limits
+      properties:
+        accId:
+          type: string
+          example: "SK1234567890"
+        limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountLimit'
+
+    AccountLimit:
+      type: object
+      required:
+        - type
+        - dailyLimit
+        - monthlyLimit
+        - currency
+      properties:
+        type:
+          type: string
+          description: Type of operation the limit applies to
+          example: SEPA_TRANSFER
+        dailyLimit:
+          type: number
+          format: decimal
+          description: Maximum daily amount
+          example: 5000.00
+        monthlyLimit:
+          type: number
+          format: decimal
+          description: Maximum monthly amount
+          example: 20000.00
+        currency:
+          type: string
+          example: EUR
+        usedDaily:
+          type: number
+          format: decimal
+          description: Amount already used today
+          example: 1200.00
+        usedMonthly:
+          type: number
+          format: decimal
+          description: Amount already used in current month
+          example: 8000.00
+
+    AccountLimitsUpdateRequest:
+      type: object
+      required:
+        - limits
+      properties:
+        limits:
+          type: array
+          description: List of limits to be updated
+          items:
+            $ref: '#/components/schemas/AccountLimitUpdate'
+
+    AccountLimitUpdate:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Type of operation to update
+          example: SEPA_TRANSFER
+        dailyLimit:
+          type: number
+          format: decimal
+          example: 6000.00
+        monthlyLimit:
+          type: number
+          format: decimal
+          example: 25000.00
