@@ -10,6 +10,10 @@ paths:
     get:
       tags:
         - Accounts
+      security:
+        - scopes:
+           - salesProcess:rw-limits
+
       summary: Get account limits
       description: |
         Returns all configured limits for a specific account.
@@ -96,7 +100,6 @@ components:
       required:
         - type
         - dailyLimit
-        - monthlyLimit
         - currency
       properties:
         type:
@@ -108,11 +111,6 @@ components:
           format: decimal
           description: Maximum allowed daily amount
           example: 5000.00
-        monthlyLimit:
-          type: number
-          format: decimal
-          description: Maximum allowed monthly amount
-          example: 20000.00
         currency:
           type: string
           description: Limit currency
@@ -122,11 +120,6 @@ components:
           format: decimal
           description: Amount already used today
           example: 1200.00
-        usedMonthly:
-          type: number
-          format: decimal
-          description: Amount already used in the current month
-          example: 8000.00
 
     AccountLimitsUpdateRequest:
       type: object

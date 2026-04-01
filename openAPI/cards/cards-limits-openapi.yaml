@@ -11,10 +11,12 @@ paths:
       summary: Načítanie limitov debetnej karty
       description: |
         Vráti aktuálne nastaviteľné limity pre konkrétnu debetnú kartu
-        identifikovanú pomocou `cardIdentifier`.
+        identifikovanú pomocou cardIdentifier.
       operationId: getDebitCardLimits
       security:
         - bearerAuth: []
+        - scopes:
+           - salesProcess:rw-limits
       parameters:
         - name: cardIdentifier
           in: path
