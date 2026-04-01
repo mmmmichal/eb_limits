@@ -20,7 +20,7 @@ Endpoint slúži na:
 
 ### Autorizácia
 
-OAuth 2.0 Bearer token (Base64 kódovaná HTTP hlavička) poskytnutý riešením **Federated Login**.
+OAuth 2.0 Bearer token (Base64 kódovaná HTTP hlavička) poskytnutý riešením Federated Login.
 
 ---
 

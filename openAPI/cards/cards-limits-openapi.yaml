@@ -54,7 +54,7 @@ paths:
         '403':
           description: Zakázaná operácia
         '404':
-          description: Karta neexistuje
+          description: Karta neexistuje, blokovaná
 
     put:
       summary: Úprava limitov debetnej karty
@@ -97,7 +97,7 @@ paths:
         '403':
           description: Zakázaná operácia
         '404':
-          description: Karta neexistuje
+          description: Karta neexistuje, blokovaná
 
 components:
   securitySchemes:

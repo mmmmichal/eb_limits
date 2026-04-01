@@ -10,7 +10,6 @@ paths:
     get:
       tags:
         - Accounts
-        - Limits
       summary: Get account limits
       description: |
         Returns all configured limits for a specific account.
@@ -31,15 +30,16 @@ paths:
                 $ref: '#/components/schemas/AccountLimitsResponse'
         '400':
           description: Invalid account identifier
-        '404':
+        '404': 
           description: Account not found
+        '409':
+         description: Blocked card
         '500':
           description: Internal server error
 
-    patch:
+    put:
       tags:
         - Accounts
-        - Limits
       summary: Update account limits
       description: |
         Updates one or more limits for a specific account.
@@ -70,7 +70,7 @@ paths:
         '404':
           description: Account not found
         '409':
-          description: Limit conflict or business rule violation
+          description: Limit conflict, business rule violation, blocked card
         '500':
           description: Internal server error
 
