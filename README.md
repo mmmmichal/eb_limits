@@ -3,8 +3,8 @@ Zmenová požiadavka
 
 ```yaml
 contact:
-  name: Responsible Team
-  email: Team's email alias
+  name: Daily banking
+  email: dailyBanking@smileBank.com
 ```
 
 [[_TOC_]]
@@ -59,7 +59,9 @@ v kanáloch:
 pre segment retailových klientov.
 
 Pre obsluhu korporátnych klientov a zmeny limitov pre kreditné karty bude vytvorená samostatná zmenová požiadavka.
-V každom procese pôjde o úpravu limitov, nakoľko pri zakladaní produktu sa vždy limity definujú
+V každom procese pôjde o úpravu limitov, nakoľko pri zakladaní produktu sa vždy limity definujú.
+
+
 
 ```mermaid
 
@@ -101,39 +103,64 @@ flowchart TD
 
 ## 🗄️ Detailný popis požiadavky
 A. Entry points
-   1. mobilná aplikácia
+1. mobilná aplikácia
     
-    - Debetná karta
+- Debetná karta
         
-        Používateľ v súčasnosti vidí na overview page zoznam kariet aj s limitmi. Nemôže ich však meniť. Pre túto potrebu bude pripravená sub-page kde používateľ uvidí 4 kategórie limitov, ktoré bude možné upravovať. Používateľ sa na ňu dostáva cez tlačidlo 'Zmena limitov' v detaile karty.
+    Používateľ v súčasnosti vidí na overview page zoznam kariet aj s limitmi. Nemôže ich však meniť. Pre túto potrebu bude pripravená sub-page kde používateľ uvidí 4 kategórie limitov, ktoré bude možné upravovať. Používateľ sa na ňu dostáva cez tlačidlo 'Zmena limitov' v detaile karty.
    
-    - Účet
-        Používateľ po prihlásení vidí zoznam účtov. Po kliknutí na prehľad účtu sa dostáva na detail účtu, kde pribudne tlačidlo 'Zmena denného limitu'.
-
-
-   2. web
-      1. Debetná karta
+- Účet
+    
+    Používateľ po prihlásení vidí zoznam účtov. Po kliknutí na prehľad účtu sa dostáva na detail účtu, kde pribudne tlačidlo 'Zmena denného limitu'.
+    
+2. web
+      
+- Debetná karta
         Používateľ po prihlásení vidí zoznam platobných kariet. Po kliknutí na ikonu karty sa dostáva na detail karty, kde pribudne tlačidlo 'Zmena limitov'.
-      2. Účet
+- Účet
         Používateľ si dokáže upraviť limity v detaile účtu, po kliknutí na tlačidlo 'Zmena denného limitu'
     Všetky entry pointy budú sprístupnené bez nutnosti aktivácie. Právo na úpravu limitov bude mať len vlastník účtu.
 
 B. Typy limitov
 
-       1. Debetná karta
-        Pri debetnej karte bude možné spravovať 4 druhy limitov a to:
-        - maximálny jednorázový objem pre výber z bankomatu
-        - maximálna jednorazovo uhradená suma cez platobný terminál (PoS)
-        - maximálna jednorázová platba cez platobnú branu a platobné metódy tretích strán (Gpay, ApplePay atd...)
-        - denný limit pre celkový obrat na karte (suma všetkých )
+1. Debetná karta
+        
+    Pri debetnej karte bude možné spravovať 4 druhy limitov a to:
+- maximálny jednorázový objem pre výber z bankomatu
+- maximálna jednorazovo uhradená suma cez platobný terminál (PoS)
+- maximálna jednorázová platba cez platobnú branu a platobné metódy tretích strán (Gpay, ApplePay atd...)
+- denný limit pre celkový obrat na karte (suma všetkých )
 
-       2. Účet
-        Na osobnom účte bud možné nastavovať 1 limit - denný maximálny obrat na účte definovaný ako súčet všetkých debetných operácií v čase 0-24. 
+2. Účet
+
+    Na osobnom účte bud možné nastavovať 1 limit - denný maximálny obrat na účte definovaný ako súčet všetkých debetných operácií v čase 0-24. 
+
+    Pravidlá pre hodnoty limitov:
+
+- denný limit musí byť rovný alebo väčší ako súčet všetkých ďalších limitov
+- každý limit je celé číslo bez desatinných miest
+- limit sa nenulový
+- limit nemôže prekročiť hodnoty nastavené pre jedotlivé produkty
+- zmena limitu je platná bezodkladne po potrdení zmeny v kanále
 
 C. Autorizácia
-        Každá úprava limitu musí byť autorizovaná samostatne. Autorizácia prebieha v elektronickom kanále a používateľ si môže vybrať jeden zo svojich aktívnych bezpečnostných predmetov. 
+    
+ Každá úprava limitu musí byť autorizovaná samostatne. Autorizácia prebieha v 
+    elektronickom kanále a používateľ si môže vybrať jeden zo svojich aktívnych bezpečnostných predmetov. 
+
+D. Oznámenie o zmene
+
+Po zápise novej hodnoty limitu je o zmene notifikovaný vlastník produktu prostredníctvom push notifikácie cez nainštalovanú mobilnú aplikáciu.
+
+Zároveň je zmena logovaná do užívateľského profilu tak, aby bola zmena viditeľná aj pre kontaktné centrum a operátora na pobočke.
+
 
 ## 🏗️ Architektúra
+Pre navrhované riešenie sa počíta s existenciou integrácie na úpravu limitov na komponentoch Core banking a vydávateľa karty, nakoľko sa limity v súčasnej dobe dajú upravovať na pobočke.
+
+Na integráciu medzi používateľskou aplikáciou a bankovými systémami sú uz existujúce fasádne mikroaplikácie, ktoré na základe volania vykonajú biznis logiku.
+
+Po prevolaní endpointu sa v prvom kroku vyvolá podpisová obrazovka a po úspešnom podpísaní žiadosi sa zmena zanáša cez už dostupné endpointy do core bankových systémov a do systému vydávateľa karty.
 
 ![Component Diagram](assets/limits.svg)
 
@@ -157,12 +184,6 @@ Source: [EB limits for accounts and cards](assets/limits.svg)
 | Daily banking            | Vývoj 4 nových endpointov pre načítanie a úpravu limitov pre karty a účty.|
 | CRM            | Príprava kampane pre používateľov|
 
-
-## 📜 API Commons
-
-A shared set of standards or common guidelines applicable across various APIs or Features.
-
-### 🔑 Autorizácia
 
 ### 🔢 Stavový diagram
 ```mermaid
@@ -258,8 +279,204 @@ sequenceDiagram
     CoreBanking ->> EB: fetch EB data
     AccountFacade ->> CardProducer: related account processing
 ```
+### 🔢 Databázový model
 
+```mermaid
+erDiagram
+
+    CHANNEL {
+        string channel_id PK
+        string name              "MOBILE|WEB"
+    }
+
+    USER_ACTOR {
+        string user_id PK
+        string external_user_ref "id z IAM/kanála"
+        string user_type         "RETAIL|CORP|SYSTEM"
+    }
+
+    ACCOUNT {
+        string account_id PK
+        string core_banking_account_id "ID v Core Banking"
+        string iban
+        string currency
+        string status
+    }
+
+    CARD {
+        string card_id PK
+        string issuer_card_id     "ID v issuer prostredí / Card info"
+        string pan_hash           "tokenizovany PAN"
+        string status
+        string account_id FK
+    }
+
+    LIMIT_TYPE {
+        string limit_type_id PK
+        string code              "ATM|POS|ECOM|TRANSFER..."
+        string scope             "ACCOUNT|CARD"
+        string description
+    }
+
+    LIMIT_PERIOD {
+        string period_id PK
+        string code              "1D|1W|1M|1Y..."
+        int    duration_days
+    }
+
+    %% Aktuálne (effective) limity
+    ACCOUNT_LIMIT {
+        string account_limit_id PK
+        string account_id FK
+        string limit_type_id FK
+        string period_id FK
+        decimal amount
+        string currency
+        datetime effective_from
+        datetime effective_to
+        int version
+        string source_system     "CORE_BANKING|FACADE"
+    }
+
+    CARD_LIMIT {
+        string card_limit_id PK
+        string card_id FK
+        string limit_type_id FK
+        string period_id FK
+        decimal amount
+        string currency
+        datetime effective_from
+        datetime effective_to
+        int version
+        string source_system     "CARD_INFO|FACADE"
+    }
+
+    %% Žiadosť o zmenu limitu (PUT)
+    LIMIT_CHANGE_REQUEST {
+        string request_id PK
+        string scope              "ACCOUNT|CARD"
+        string account_id FK
+        string card_id FK
+        string limit_type_id FK
+        string period_id FK
+        decimal requested_amount
+        string requested_currency
+        string status             "DRAFT|WAITING_SIGNATURE|SIGNED|APPLIED|REJECTED|FAILED"
+        string channel_id FK
+        string created_by_user_id FK
+        datetime created_at
+        datetime updated_at
+        string correlation_id     "pre trasovanie naprieč systémami"
+    }
+
+    %% Podpisovanie
+    SIGNING_APP {
+        string app_id PK
+        string request_id FK
+        string signing_system     "SIGNING_TOOL"
+        string payload_hash
+        string status             "CREATED|SENT|SIGNED|DECLINED|EXPIRED|FAILED"
+        datetime created_at
+        datetime signed_at
+    }
+
+    SIGNATURE {
+        string signature_id PK
+        string app_id FK
+        string method             "SCA|QES|... podľa toolu"
+        string signer_ref         "referencia na používateľa/identitu"
+        datetime verified_at
+        string verification_result "OK|NOK"
+    }
+
+    %% Audit a udalosti (čo sa stalo, kedy a prečo)
+    AUDIT_EVENT {
+        string audit_id PK
+        string request_id FK
+        string event_type         "REQUEST_CREATED|SIGN_SENT|SIGNED|APPLY_SENT|APPLIED|FAILED..."
+        datetime event_time
+        string actor_user_id FK
+        string details_json
+    }
+
+    %% Outbox/log pre integrácie (Core Banking / Card info)
+    INTEGRATION_MESSAGE {
+        string message_id PK
+        string request_id FK
+        string target_system      "CORE_BANKING|CARD_INFO"
+        string operation          "GET_LIMITS|SET_LIMITS"
+        string http_method        "GET|PUT"
+        string endpoint
+        string status             "NEW|SENT|ACK|ERROR|RETRYING"
+        int retry_count
+        datetime created_at
+        datetime last_attempt_at
+        string last_error
+    }
+
+    %% Vzťahy
+    CHANNEL ||--o{ LIMIT_CHANGE_REQUEST : originates
+    USER_ACTOR ||--o{ LIMIT_CHANGE_REQUEST : creates
+    USER_ACTOR ||--o{ AUDIT_EVENT : acts
+
+    ACCOUNT ||--o{ CARD : has
+    ACCOUNT ||--o{ ACCOUNT_LIMIT : has
+    CARD ||--o{ CARD_LIMIT : has
+
+    LIMIT_TYPE ||--o{ ACCOUNT_LIMIT : configures
+    LIMIT_PERIOD ||--o{ ACCOUNT_LIMIT : over
+    LIMIT_TYPE ||--o{ CARD_LIMIT : configures
+    LIMIT_PERIOD ||--o{ CARD_LIMIT : over
+
+    LIMIT_CHANGE_REQUEST ||--o{ AUDIT_EVENT : logs
+    LIMIT_CHANGE_REQUEST ||--o| SIGNING_APP : requires
+    SIGNING_APP ||--o{ SIGNATURE : produces
+
+    LIMIT_CHANGE_REQUEST ||--o{ INTEGRATION_MESSAGE : sends
+
+```
 <!-- TODO: Any other component level details applicable for every supported feature. -->
+## 📜 API Commons
+
+Spoločný súbor štandardov alebo pravidiel používaných v API.
+
+### 🔑 Autorizácia
+
+API nezodpovedá za autentifikáciu (t. j. overenie, či je používateľ/klient tým, za koho sa vydáva, napr. kontrolou mena a hesla), ale výhradne za autorizáciu (t. j. overenie, či môže používateľ/klient pristupovať ku konkrétnemu zdroju v danom čase).
+
+API je teda založené na tokenovom bezpečnostnom koncepte a potrebuje iba overiť platnosť tokenov, ktoré klient pri každom volaní poskytuje ako dôkaz, že má oprávnenie pristupovať k požadovaným dátam.
+
+Práca s tokenom
+
+Z pohľadu tohto API je token „blackbox“, ktorá je súčasťou každej klientskej požiadavky:
+
+Prijatý token odovzdá serverovej knižnici alebo službe na overenie.
+Ak sa ukáže, že token je platný pre konkrétne volanie, vykoná sa biznis logika.
+API nemusí token samo parsovať ani interpretovať.
+
+Požiadavky na token
+
+Toto API môže pracovať s akýmkoľvek typom tokenu, pokiaľ platia nasledujúce predpoklady:
+
+- token je už vo formáte/kódovaní, ktoré je možné odovzdať v HTTP hlavičke Authorization
+
+- maximálna veľkosť tokenu je 1024 bajtov
+(keďže sa posiela s každou požiadavkou a pri mobilných zariadeniach záleží na každej milisekunde; priemerná veľkosť by však mala byť výrazne menšia, napr. ~256 bajtov, kvôli zníženiu prenosu dát)
+
+- platnosť tokenu je možné overiť pomocou knižnice alebo služby
+
+- z tokenu je možné odvodiť používateľa
+
+- z tokenu je možné odvodiť oprávnenia, vrátane:
+
+samostatných oprávnení na čítanie a zápis oprávnení až na úroveň konkrétneho biznis objektu (napr. konkrétny účet, správa alebo šablóna)
+alternatívne môže token definovať oprávnenia vo väčších celkoch, najmä pri entitách, ktoré používateľ vlastní, napr. „všetky moje účty“
+
+**Použitá technológia**
+
+Použije sa OAuth 2.0 bearer token
+Tieto tokeny zapuzdrujú SAML oprávnenia
+Toto riešenie spĺňa všetky vyššie uvedené požiadavky
 
 ## 📑 Related documentation
 
