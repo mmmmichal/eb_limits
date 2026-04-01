@@ -477,8 +477,3 @@ alternatívne môže token definovať oprávnenia vo väčších celkoch, najmä
 Použije sa OAuth 2.0 bearer token
 Tieto tokeny zapuzdrujú SAML oprávnenia
 Toto riešenie spĺňa všetky vyššie uvedené požiadavky
-
-## 📑 Related documentation
-
-- 🔗 [**Component `COMP-XX`**](https://jira.app.slsp.sk/browse/)
-- 🔐 [**List of scopes by specific API endpoint**](_assets/list_of_scopes.md)

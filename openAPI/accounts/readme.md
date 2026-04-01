@@ -1,5 +1,3 @@
----
-
 ## API Endpointy
 
 ### Účty – Limity
