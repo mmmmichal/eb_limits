@@ -3,7 +3,7 @@ info:
   title: Banking Services API – Account Limits
   version: 1.0.0
   description: |
-    API pre úpravu nastaviteľných limitov debetných platobných kariet.
+    API for managing configurable limits for accounts.
 
 paths:
   /v1/accounts/{accId}/limits:
@@ -30,10 +30,10 @@ paths:
                 $ref: '#/components/schemas/AccountLimitsResponse'
         '400':
           description: Invalid account identifier
-        '404': 
+        '404':
           description: Account not found
         '409':
-         description: Blocked card
+          description: Blocked card
         '500':
           description: Internal server error
 
@@ -43,7 +43,7 @@ paths:
       summary: Update account limits
       description: |
         Updates one or more limits for a specific account.
-        Only provided limit values are updated.
+        Only the provided limit values are updated.
       operationId: updateAccountLimits
       parameters:
         - name: accId
@@ -70,7 +70,7 @@ paths:
         '404':
           description: Account not found
         '409':
-          description: Limit conflict, business rule violation, blocked card
+          description: Limit conflict, business rule violation, or blocked card
         '500':
           description: Internal server error
 
@@ -84,6 +84,7 @@ components:
       properties:
         accId:
           type: string
+          description: Account identifier
           example: "SK1234567890"
         limits:
           type: array
@@ -105,15 +106,16 @@ components:
         dailyLimit:
           type: number
           format: decimal
-          description: Maximum daily amount
+          description: Maximum allowed daily amount
           example: 5000.00
         monthlyLimit:
           type: number
           format: decimal
-          description: Maximum monthly amount
+          description: Maximum allowed monthly amount
           example: 20000.00
         currency:
           type: string
+          description: Limit currency
           example: EUR
         usedDaily:
           type: number
@@ -123,7 +125,7 @@ components:
         usedMonthly:
           type: number
           format: decimal
-          description: Amount already used in current month
+          description: Amount already used in the current month
           example: 8000.00
 
     AccountLimitsUpdateRequest:
@@ -149,8 +151,10 @@ components:
         dailyLimit:
           type: number
           format: decimal
+          description: New daily limit value
           example: 6000.00
         monthlyLimit:
           type: number
           format: decimal
+          description: New monthly limit value
           example: 25000.00
