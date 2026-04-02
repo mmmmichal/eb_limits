@@ -70,17 +70,19 @@ flowchart TD
     subgraph U[Retailový používateľ]
         A["Zmena limitu<br/>(debetná karta / osobný účet)"]
         B[Prihlásenie do digitálneho kanála]
-        C[Zadanie novej hodnoty limitu]
-        D[Potvrdenie zmeny<br/>bez obmedzenia počtu zmien]
+        
+        
     end
 
     subgraph K[Digitálne kanály]
         K1[Elektronické bankovníctvo – Web]
+        C[Zadanie novej hodnoty limitu]
         K2[Elektronické bankovníctvo – Mobilná aplikácia]
     end
 
     subgraph S[Bankové systémy]
         E[Overenie oprávnenia<br/>a produktu]
+        D[Potvrdenie zmeny<br/>bez obmedzenia počtu zmien]
         F[Podpis zmeny<br/>bezpečnostným predmetom]
         G[Vykonanie zmeny limitu]
         H[Zalogovanie zmeny]
@@ -153,6 +155,7 @@ D. Oznámenie o zmene
 Po zápise novej hodnoty limitu je o zmene notifikovaný vlastník produktu prostredníctvom push notifikácie cez nainštalovanú mobilnú aplikáciu.
 
 Zároveň je zmena logovaná do užívateľského profilu tak, aby bola zmena viditeľná aj pre kontaktné centrum a operátora na pobočke.
+
 
 
 ## 🏗️ Architektúra
@@ -265,7 +268,7 @@ sequenceDiagram
     UserApp ->> APIGW: PUT v1/cards/{cardId}/limits
     APIGW ->> CardFacade: forward request
     CardFacade ->> CoreBanking: process card limits
-    CoreBanking ->> EB: fetch EB data
+    EB ->> CoreBanking: fetch EB data
     CardFacade ->> CardProducer: card-related processing
 
     %% Account limits flow (PUT)
@@ -276,7 +279,7 @@ sequenceDiagram
     UserApp ->> APIGW: PUT v1/accounts/{accId}/limits
     APIGW ->> AccountFacade: forward request
     AccountFacade ->> CoreBanking: process account limits
-    CoreBanking ->> EB: fetch EB data
+    EB->> CoreBanking: fetch EB data
     AccountFacade ->> CardProducer: related account processing
 ```
 ### 🔢 Databázový model
@@ -474,6 +477,4 @@ alternatívne môže token definovať oprávnenia vo väčších celkoch, najmä
 
 **Použitá technológia**
 
-Použije sa OAuth 2.0 bearer token
-Tieto tokeny zapuzdrujú SAML oprávnenia
-Toto riešenie spĺňa všetky vyššie uvedené požiadavky
+Použije sa OAuth 2.0 bearer token.
